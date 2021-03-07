@@ -54,6 +54,19 @@ app.post('/addcoupon', (req, res) => {
     });
 })
 
+//get all categories
+app.get('/categoryname', (req, res) => {
+    let query = {isActive: true}
+    db.collection("coupons").find(query).toArray((err, data) => {
+        if(err) throw err
+        let cate = new Set()
+        data.map((items) => {
+            cate.add(items.category)
+        })
+        let lists = Array.from(cate)
+        return res.send(lists)
+    })
+})
 
 //get all active coupons
 app.get('/allcoupons', (req, res) => {
@@ -64,8 +77,33 @@ app.get('/allcoupons', (req, res) => {
     })
 })
 
+//couponvalidator
+app.get('/validate/:coupon', (req, res) => {
+    let query = {code: req.params.coupon}
+    db.collection('coupons').findOne(query, (err, data) => {
+        if(err) throw err
+        if(!data){
+            return res.send({err: 'Invalid Coupon, Please Check the coupon and try again'})
+        }
+        if(data.isActive === false){
+            return res.send({err: 'Coupon Expired/InActive'})
+        }
+        return res.send(data)
+    })
+})
+
+
+//get coupon by id
+app.get('/couponbyid/:id', (req, res) => {
+    let query = {_id : mongodb.ObjectID(req.params.id)}
+    db.collection("coupons").find(query).toArray((err, data) => {
+        if(err) throw err
+        return res.send(data)
+    })
+})
+
 //get coupons by category
-app.get('/category', (req, res) => {
+app.post('/category', (req, res) => {
     let query = {isActive: true, category: req.body.category}
     db.collection("coupons").find(query).toArray((err, data) => {
         if(err) throw err
@@ -74,13 +112,24 @@ app.get('/category', (req, res) => {
 })
 
 //get coupons by website and category
-app.get('/webcategory', (req, res) => {
+app.post('/webcategory', (req, res) => {
     let query = {isActive: true, category: req.body.category, website: req.body.website}
     db.collection("coupons").find(query).toArray((err, data) => {
         if(err) throw err
         return res.send(data)
     })
 })
+
+//getcoupons by website
+app.post('/web', (req, res) => {
+    let query = {isActive: true,website: req.body.website}
+    db.collection("coupons").find(query).toArray((err, data) => {
+        if(err) throw err
+        return res.send(data)
+    })
+})
+
+
 
 //get all expired coupons
 app.get('/allexpired', (req, res) => {
@@ -92,7 +141,7 @@ app.get('/allexpired', (req, res) => {
 })
 
 //get all expired coupons by category
-app.get('/expiredcategory', (req, res) => {
+app.post('/expiredcategory', (req, res) => {
     let query = {isActive: false, category: req.body.category}
     db.collection("coupons").find(query).toArray((err, data) => {
         if(err) throw err
